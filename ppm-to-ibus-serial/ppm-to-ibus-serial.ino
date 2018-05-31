@@ -4,16 +4,16 @@
  Author:	wdcossey
 */
 
-#define IBUS_FRAME_LENGTH 0x20									// iBus packet size (2 byte header, 14 channels x 2 bytes, 2 byte checksum)
-#define IBUS_COMMAND40 0x40										// Command is always 0x40
-#define IBUS_MAXCHANNELS 14										// iBus has a maximum of 14 channels
+#define IBUS_FRAME_LENGTH 0x20                                  // iBus packet size (2 byte header, 14 channels x 2 bytes, 2 byte checksum)
+#define IBUS_COMMAND40 0x40                                     // Command is always 0x40
+#define IBUS_MAXCHANNELS 14                                     // iBus has a maximum of 14 channels
 
 #define IBUS_DEFAULT_VALUE (uint16_t)1500
 
-#define PPM_LOW_SEPARATOR (uint16_t)2100						// Anything higher than this value is considered to be the pulse separator
+#define PPM_LOW_SEPARATOR (uint16_t)2100                        // Anything higher than this value is considered to be the pulse separator
 
-#define PPM_MAX_CHANNELS 10										// Should be no more than 10
-#define PPM_JITTER_THRESHOLD 8									// 
+#define PPM_MAX_CHANNELS 10                                     // Should be no more than 10
+#define PPM_JITTER_THRESHOLD 8                                  // 
 
 volatile uint16_t ppm_pulse_data[PPM_MAX_CHANNELS] = { 0 };		// 
 volatile uint16_t ppm_channel_data[PPM_MAX_CHANNELS] = { 0 };	// 
