@@ -11,7 +11,7 @@ This sketch will:
 * Generate a valid IBus checksum.
 
 Hardware requirements:
-* Arduino.
+* Arduino (Interrupt **PCINT0**, **D8** on the Uno).
 * PPM receiver.
 
 Software requirements:
