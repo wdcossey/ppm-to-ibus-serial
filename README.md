@@ -19,3 +19,5 @@ Hardware requirements:
 Software requirements:
 * [VJoySerialFeeder](https://github.com/Cleric-K/vJoySerialFeeder) (see the page for additional requirements).
 
+ToDo:
+* Remove PPM jitter.
