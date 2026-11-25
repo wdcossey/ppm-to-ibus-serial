@@ -11,3 +11,5 @@
 
 **/__vm
 *.vcxproj.user
+test/build/
+__pycache__/
