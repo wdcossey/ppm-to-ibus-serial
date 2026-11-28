@@ -1,4 +1,4 @@
-# Tests the DEBUG_OUTPUT 2 (raw timing) build. Usage: ./run.sh  (or: python3 tests_raw.py <firmware.elf>)
+# PPM to iBus serial: DEBUG_OUTPUT 2 (raw timing). Usage: ./run.sh  (or: python3 ppm_to_ibus_serial_raw.py <debug firmware.elf>)
 import sys
 from ppmsim import frames, run_text
 

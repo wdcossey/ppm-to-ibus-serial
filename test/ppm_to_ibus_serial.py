@@ -1,4 +1,4 @@
-# Usage: ./run.sh  (or: python3 tests.py <firmware.elf>)
+# PPM to iBus serial: decoding, jitter, glitches, signal loss. Usage: ./run.sh  (or: python3 ppm_to_ibus_serial.py <firmware.elf>)
 import sys, random
 from ppmsim import frames, run, T0
 

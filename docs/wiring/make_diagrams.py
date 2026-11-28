@@ -106,7 +106,7 @@ def find_pin(board, header_index, label, ox, oy):
     raise KeyError(label)
 
 
-def draw(name, wiring, receiver_title, notes):
+def draw(name, wiring, receiver_title, notes, signal_name="PPM signal"):
     board = BOARDS[name]
     bw, bh = board["size"]
     ox, oy = 100, 70                                  # Board position
@@ -180,7 +180,8 @@ def draw(name, wiring, receiver_title, notes):
     for wire in order:
         py = rpins[wire][1]
         out.append(f"<rect x='{rx - 5}' y='{py - 5}' width='10' height='10' fill='{WIRE[wire]}' stroke='#333'/>")
-        out.append(f"<text x='{rx + 12}' y='{py + 4}' font-size='12' fill='#222'>{esc(WIRE_NAME[wire])}</text>")
+        text = signal_name if wire == "sig" else WIRE_NAME[wire]
+        out.append(f"<text x='{rx + 12}' y='{py + 4}' font-size='12' fill='#222'>{esc(text)}</text>")
 
     # Notes
     for i, note in enumerate(notes):
@@ -199,9 +200,26 @@ PPM_NOTES = {
     "mega": ["PPM signal to D49 (double row header). 5V and GND are at the ends of the same header."],
 }
 
+IBUS_WIRING = {
+    "leonardo": {"sig": (1, "0"), "vcc": (2, "5V"), "gnd": (2, "GND")},
+    "promicro": {"sig": (0, "RX1"), "vcc": (1, "VCC"), "gnd": (1, "GND")},
+}
+
+IBUS_NOTES = {
+    "leonardo": ["iBus servo signal to RX (D0). The Arduino Micro uses its RX pin as well."],
+    "promicro": ["iBus servo signal to RX1. For the status LED set STATUS_LED_PIN 17 and STATUS_LED_ON LOW."],
+}
+
+
+def write(filename, svg):
+    path = os.path.join(HERE, filename)
+    with open(path, "w") as f:
+        f.write(svg)
+    print("wrote", path)
+
+
 if __name__ == "__main__":
     for name, wiring in PPM_WIRING.items():
-        path = os.path.join(HERE, f"ppm-{name}.svg")
-        with open(path, "w") as f:
-            f.write(draw(name, wiring, "PPM receiver", PPM_NOTES[name]))
-        print("wrote", path)
+        write(f"ppm-{name}.svg", draw(name, wiring, "PPM receiver", PPM_NOTES[name]))
+    for name, wiring in IBUS_WIRING.items():
+        write(f"ibus-{name}.svg", draw(name, wiring, "iBus receiver", IBUS_NOTES[name], signal_name="iBus (servo port)"))

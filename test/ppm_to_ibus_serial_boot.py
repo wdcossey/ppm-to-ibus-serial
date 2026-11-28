@@ -1,4 +1,4 @@
-# Tests the boot check and the status LED. Usage: ./run.sh  (or: python3 tests_boot.py <firmware.elf> <debug firmware.elf>)
+# PPM to iBus serial: boot check and status LED. Usage: ./run.sh  (or: python3 ppm_to_ibus_serial_boot.py <firmware.elf> <debug firmware.elf>)
 import sys
 from ppmsim import frames, simulate, decode, START, LED_PIN
 

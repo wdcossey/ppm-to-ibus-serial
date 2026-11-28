@@ -65,6 +65,7 @@
 #ifndef DEBUG_OUTPUT
 #define DEBUG_OUTPUT 0
 #endif
+#define DEBUG_PORT Serial                  // The debug output replaces the iBus output on the same port
 
 // Status LED (see above). Comment out STATUS_LED_PIN to leave the LED alone.
 // Pro Micro: it has no LED on pin 13, use its RX LED instead: pin 17 with STATUS_LED_ON LOW.
@@ -86,14 +87,15 @@
 #error "PPM_MAX_CHANNELS can't be greater than IBUS_MAXCHANNELS"
 #endif
 
+// ----- BEGIN SHARED: ppm-decoder -----
+// PPM decoder, shared by ppm-to-ibus-serial and ppm-to-usb-joystick.
+// Keep both copies identical (test/check_shared.py checks this).
+
 #if PPM_MIN_CHANNELS < 1 || PPM_MIN_CHANNELS > PPM_MAX_CHANNELS
 #error "PPM_MIN_CHANNELS must be between 1 and PPM_MAX_CHANNELS"
 #endif
 
-// ---------------------------------------------------------------------------
 // Board specific input capture setup
-// ---------------------------------------------------------------------------
-
 #if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega328PB__) || defined(__AVR_ATmega328__) || \
     defined(__AVR_ATmega168__) || defined(__AVR_ATmega168P__) || defined(__AVR_ATmega168PA__) || \
     defined(__AVR_ATmega88P__) || defined(__AVR_ATmega88PA__)
@@ -146,10 +148,12 @@
 
 #define PPM_CHANNEL_MIN_TICKS US_TO_TICKS(PPM_CHANNEL_MIN_US)
 
-// ---------------------------------------------------------------------------
-// State shared between the capture ISR and loop()
-// ---------------------------------------------------------------------------
+// What PpmUpdate() reports
+#define PPM_NO_CHANGE 0
+#define PPM_NEW_FRAME 1                                // channel_us / channel_count hold a new frame
+#define PPM_SIGNAL_LOST 2                              // channel_count has just become 0
 
+// Shared between the capture ISR and the main code
 volatile uint16_t ppm_frame_ticks[PPM_MAX_CHANNELS];   // Last complete, validated frame (timer ticks)
 volatile uint8_t ppm_frame_channels = 0;               // Number of channels in ppm_frame_ticks
 volatile bool ppm_frame_ready = false;                 // Set by the ISR when a new frame is available
@@ -165,21 +169,14 @@ volatile uint16_t edge_ticks[EDGE_BUFFER_SIZE];
 volatile uint16_t edge_count = 0;                      // Edges seen so far (wraps around)
 volatile bool edge_buffer_full = false;                // Every entry of edge_ticks holds a real measurement
 
-// ---------------------------------------------------------------------------
-// State only used by loop()
-// ---------------------------------------------------------------------------
-
+// The decoded channels, only used by the main code
 uint16_t channel_us[PPM_MAX_CHANNELS];                 // Filtered channel values (microseconds)
 uint8_t channel_count = 0;                             // 0 = no signal
 unsigned long last_frame_ms = 0;
 
-byte serial_buffer[IBUS_FRAME_LENGTH];
-
-// the setup function runs once when you press reset or power the board
-void setup() {
-
-	Serial.begin(SERIAL_BAUD_RATE);
-
+// Call from setup()
+static void PpmSetup()
+{
 #ifdef STATUS_LED_PIN
 	pinMode(STATUS_LED_PIN, OUTPUT);
 #endif
@@ -301,16 +298,10 @@ static uint8_t CopyEdges(uint16_t *us, uint16_t *edges)
 	return valid;
 }
 
-struct FrameLayout {
-	uint8_t channels;
-	uint16_t gap_min_us;                               // Shortest frame gap seen
-	uint16_t channel_max_us;                           // Longest channel seen
-};
-
 // Looks for a repeating PPM frame layout in a list of edge-to-edge times:
 // a fixed number of channels followed by a gap that's longer than all of them.
 // Picks the layout with the clearest difference between gaps and channels.
-static bool FindFrameLayout(const uint16_t *us, uint8_t count, FrameLayout &layout)
+static bool FindFrameLayout(const uint16_t *us, uint8_t count, uint8_t *layout_channels, uint16_t *layout_gap_min_us, uint16_t *layout_channel_max_us)
 {
 	int32_t best_margin = 0;
 
@@ -332,16 +323,16 @@ static bool FindFrameLayout(const uint16_t *us, uint8_t count, FrameLayout &layo
 			const int32_t margin = (int32_t)gap_min - (int32_t)channel_max;
 			if (frames >= 3 && channel_min >= PPM_CHANNEL_MIN_US && margin > best_margin) {
 				best_margin = margin;
-				layout.channels = channels;
-				layout.gap_min_us = gap_min;
-				layout.channel_max_us = channel_max;
+				*layout_channels = channels;
+				*layout_gap_min_us = gap_min;
+				*layout_channel_max_us = channel_max;
 			}
 		}
 	}
 	return best_margin > 0;
 }
 
-// Runs from loop() until the boot check has finished
+// Runs until the boot check has finished
 static void RunBootCheck(unsigned long now)
 {
 	static unsigned long first_edge_ms = 0;
@@ -368,24 +359,26 @@ static void RunBootCheck(unsigned long now)
 
 	uint16_t sync_us = PPM_SYNC_MIN_US;
 	uint16_t channel_max_us = PPM_CHANNEL_MAX_US;
-	FrameLayout layout;
-	const bool found = (count == EDGE_BUFFER_SIZE) && FindFrameLayout(us, count, layout);
+	uint8_t found_channels = 0;
+	uint16_t found_gap_min_us = 0, found_channel_max_us = 0;
+	const bool found = (count == EDGE_BUFFER_SIZE) &&
+	                   FindFrameLayout(us, count, &found_channels, &found_gap_min_us, &found_channel_max_us);
 
 	if (!found && elapsed < PPM_BOOT_CHECK_TIMEOUT_MS) {
 		return;                                        // Try again in a moment
 	}
 
-	if (found && (layout.gap_min_us < PPM_SYNC_MIN_US || layout.channel_max_us > PPM_CHANNEL_MAX_US)) {
+	if (found && (found_gap_min_us < PPM_SYNC_MIN_US || found_channel_max_us > PPM_CHANNEL_MAX_US)) {
 		// The default limits don't fit this radio. Put the sync threshold
 		// between its longest channel and its shortest gap. Leave room for
 		// the sticks reaching full travel, and don't go much higher than
 		// needed: on fixed length frames the gap gets shorter as the sticks move.
-		uint16_t longest = max(layout.channel_max_us, (uint16_t)PPM_FULL_TRAVEL_US);
-		if (longest >= layout.gap_min_us) {
-			longest = layout.channel_max_us;
+		uint16_t longest = max(found_channel_max_us, (uint16_t)PPM_FULL_TRAVEL_US);
+		if (longest >= found_gap_min_us) {
+			longest = found_channel_max_us;
 		}
-		sync_us = min((uint16_t)((layout.gap_min_us + longest) / 2),
-		              max((uint16_t)PPM_SYNC_MIN_US, (uint16_t)(layout.channel_max_us + 200)));
+		sync_us = min((uint16_t)((found_gap_min_us + longest) / 2),
+		              max((uint16_t)PPM_SYNC_MIN_US, (uint16_t)(found_channel_max_us + 200)));
 		channel_max_us = sync_us - 1;
 	}
 
@@ -396,25 +389,25 @@ static void RunBootCheck(unsigned long now)
 	}
 
 	if (DEBUG_OUTPUT) {
-		Serial.print(F("Boot check: "));
+		DEBUG_PORT.print(F("Boot check: "));
 		if (found) {
-			Serial.print(layout.channels);
-			Serial.print(F(" ch, channels up to "));
-			Serial.print(layout.channel_max_us);
-			Serial.print(F("us, frame gaps from "));
-			Serial.print(layout.gap_min_us);
-			Serial.print(F("us"));
+			DEBUG_PORT.print(found_channels);
+			DEBUG_PORT.print(F(" ch, channels up to "));
+			DEBUG_PORT.print(found_channel_max_us);
+			DEBUG_PORT.print(F("us, frame gaps from "));
+			DEBUG_PORT.print(found_gap_min_us);
+			DEBUG_PORT.print(F("us"));
 		}
 		else {
-			Serial.print(F("no PPM frames found"));
+			DEBUG_PORT.print(F("no PPM frames found"));
 		}
-		Serial.print(F(". Using sync >= "));
-		Serial.print(sync_us);
-		Serial.print(F("us, channels "));
-		Serial.print(PPM_CHANNEL_MIN_US);
-		Serial.print('-');
-		Serial.print(channel_max_us);
-		Serial.println(F("us"));
+		DEBUG_PORT.print(F(". Using sync >= "));
+		DEBUG_PORT.print(sync_us);
+		DEBUG_PORT.print(F("us, channels "));
+		DEBUG_PORT.print(PPM_CHANNEL_MIN_US);
+		DEBUG_PORT.print('-');
+		DEBUG_PORT.print(channel_max_us);
+		DEBUG_PORT.println(F("us"));
 	}
 }
 
@@ -436,6 +429,108 @@ static void UpdateStatusLed(unsigned long now)
 	(void)now;
 #endif
 }
+
+#if DEBUG_OUTPUT >= 2
+// Prints the last 32 edge-to-edge times in microseconds, oldest first:
+// [12000] = frame gap (sync), 2450? = neither a valid channel nor a sync gap
+static void WriteRawTiming(unsigned long now)
+{
+	static unsigned long last_print_ms = 0;
+	static uint16_t last_edges = 0;
+
+	if (now - last_print_ms < 500) {
+		return;
+	}
+	last_print_ms = now;
+
+	uint16_t us[EDGE_BUFFER_SIZE];
+	uint16_t edges;
+	const uint8_t count = CopyEdges(us, &edges);
+
+	DEBUG_PORT.print(F("raw:"));
+	if (edges == last_edges || count == 0) {
+		DEBUG_PORT.println(F(" no edges"));
+		return;
+	}
+	last_edges = edges;
+
+	const uint16_t sync_us = TicksToMicroseconds(ppm_sync_min_ticks);
+	const uint16_t channel_max_us = TicksToMicroseconds(ppm_channel_max_ticks);
+
+	for (uint8_t i = (count > 32) ? count - 32 : 0; i < count; i++) {
+		DEBUG_PORT.print(' ');
+		if (us[i] >= sync_us) {
+			DEBUG_PORT.print('[');
+			DEBUG_PORT.print(us[i]);
+			DEBUG_PORT.print(']');
+		}
+		else {
+			DEBUG_PORT.print(us[i]);
+			if (us[i] < PPM_CHANNEL_MIN_US || us[i] > channel_max_us) {
+				DEBUG_PORT.print('?');
+			}
+		}
+	}
+	DEBUG_PORT.println();
+}
+#endif
+
+// Call from loop(). Runs the boot check, picks up new frames (filtered, in
+// channel_us / channel_count), detects signal loss and updates the LED.
+static uint8_t PpmUpdate()
+{
+	uint16_t frame_ticks[PPM_MAX_CHANNELS];
+	uint8_t frame_channels = 0;
+	uint8_t result = PPM_NO_CHANGE;
+
+	// Copy the latest frame with interrupts disabled, so the ISR can't change
+	// it half way through (16-bit reads aren't atomic on AVR).
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+		if (ppm_frame_ready) {
+			frame_channels = ppm_frame_channels;
+			for (uint8_t i = 0; i < frame_channels; i++) {
+				frame_ticks[i] = ppm_frame_ticks[i];
+			}
+			ppm_frame_ready = false;
+		}
+	}
+
+	const unsigned long now = millis();
+
+	if (!ppm_decoding) {
+		RunBootCheck(now);
+	}
+
+	if (frame_channels > 0) {
+		// Don't filter against stale values after signal loss or a channel count change
+		const bool filter = (frame_channels == channel_count);
+
+		for (uint8_t i = 0; i < frame_channels; i++) {
+			const uint16_t us = TicksToMicroseconds(frame_ticks[i]);
+			channel_us[i] = filter ? FilterJitter(channel_us[i], us) : us;
+		}
+
+		channel_count = frame_channels;
+		last_frame_ms = now;
+		result = PPM_NEW_FRAME;
+	}
+	else if (channel_count > 0 && (now - last_frame_ms) > PPM_SIGNAL_TIMEOUT_MS) {
+		channel_count = 0;
+		result = PPM_SIGNAL_LOST;
+	}
+
+	UpdateStatusLed(now);
+
+#if DEBUG_OUTPUT >= 2
+	WriteRawTiming(now);
+#endif
+
+	return result;
+}
+
+// ----- END SHARED: ppm-decoder -----
+
+byte serial_buffer[IBUS_FRAME_LENGTH];
 
 static void WriteIbus()
 {
@@ -497,104 +592,23 @@ static void WriteDebug()
 	Serial.println();
 }
 
-#if DEBUG_OUTPUT >= 2
-// Prints the last 32 edge-to-edge times in microseconds, oldest first:
-// [12000] = frame gap (sync), 2450? = neither a valid channel nor a sync gap
-static void WriteRawTiming()
-{
-	static unsigned long last_print_ms = 0;
-	static uint16_t last_edges = 0;
-	const unsigned long now = millis();
+// the setup function runs once when you press reset or power the board
+void setup() {
 
-	if (now - last_print_ms < 500) {
-		return;
-	}
-	last_print_ms = now;
-
-	uint16_t us[EDGE_BUFFER_SIZE];
-	uint16_t edges;
-	const uint8_t count = CopyEdges(us, &edges);
-
-	Serial.print(F("raw:"));
-	if (edges == last_edges || count == 0) {
-		Serial.println(F(" no edges"));
-		return;
-	}
-	last_edges = edges;
-
-	const uint16_t sync_us = TicksToMicroseconds(ppm_sync_min_ticks);
-	const uint16_t channel_max_us = TicksToMicroseconds(ppm_channel_max_ticks);
-
-	for (uint8_t i = (count > 32) ? count - 32 : 0; i < count; i++) {
-		Serial.print(' ');
-		if (us[i] >= sync_us) {
-			Serial.print('[');
-			Serial.print(us[i]);
-			Serial.print(']');
-		}
-		else {
-			Serial.print(us[i]);
-			if (us[i] < PPM_CHANNEL_MIN_US || us[i] > channel_max_us) {
-				Serial.print('?');
-			}
-		}
-	}
-	Serial.println();
+	Serial.begin(SERIAL_BAUD_RATE);
+	PpmSetup();
 }
-#endif
 
 // the loop function runs over and over again until power down or reset
 void loop() {
 
-	uint16_t frame_ticks[PPM_MAX_CHANNELS];
-	uint8_t frame_channels = 0;
-
-	// Copy the latest frame with interrupts disabled, so the ISR can't change
-	// it half way through (16-bit reads aren't atomic on AVR).
-	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-		if (ppm_frame_ready) {
-			frame_channels = ppm_frame_channels;
-			for (uint8_t i = 0; i < frame_channels; i++) {
-				frame_ticks[i] = ppm_frame_ticks[i];
-			}
-			ppm_frame_ready = false;
-		}
-	}
-
-	const unsigned long now = millis();
-
-	if (!ppm_decoding) {
-		RunBootCheck(now);
-	}
-	UpdateStatusLed(now);
-
-	if (frame_channels > 0) {
-		// Don't filter against stale values after signal loss or a channel count change
-		const bool filter = (frame_channels == channel_count);
-
-		for (uint8_t i = 0; i < frame_channels; i++) {
-			const uint16_t us = TicksToMicroseconds(frame_ticks[i]);
-			channel_us[i] = filter ? FilterJitter(channel_us[i], us) : us;
-		}
-
-		channel_count = frame_channels;
-		last_frame_ms = now;
-
-		// One iBus frame per PPM frame
-		if (!DEBUG_OUTPUT) {
-			WriteIbus();
-		}
-	}
-	else if (channel_count > 0 && (now - last_frame_ms) > PPM_SIGNAL_TIMEOUT_MS) {
-		// Signal lost: stop sending, so the PC side sees the loss instead of frozen sticks
-		channel_count = 0;
+	// One iBus frame per PPM frame. Nothing is sent without a signal, so the
+	// PC side sees the loss instead of frozen sticks.
+	if (PpmUpdate() == PPM_NEW_FRAME && !DEBUG_OUTPUT) {
+		WriteIbus();
 	}
 
 	if (DEBUG_OUTPUT) {
 		WriteDebug();
 	}
-
-#if DEBUG_OUTPUT >= 2
-	WriteRawTiming();
-#endif
 }
