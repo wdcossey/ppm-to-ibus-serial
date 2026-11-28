@@ -1,0 +1,84 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='800' height='282' viewBox='0 0 800 282' font-family='Helvetica, Arial, sans-serif'>
+<rect width='100%' height='100%' fill='#ffffff'/>
+<text x='30' y='34' font-size='20' font-weight='bold' fill='#222'>Arduino Nano</text>
+<rect x='100' y='70' width='380' height='130' rx='10' fill='#2f4f5f' stroke='#1d3340' stroke-width='2'/>
+<rect x='82' y='113.0' width='34' height='44' rx='3' fill='#c0c0c0' stroke='#888'/>
+<text x='76' y='139.0' font-size='12' fill='#444' text-anchor='end'>USB to PC</text>
+<circle cx='170' cy='135' r='6' fill='#ffd84d' stroke='#c9a500'/>
+<text x='180' y='139' font-size='11' fill='#ffffff'>LED 13 (status)</text>
+<polyline points='228.0,88.0 228.0,52.0 510.0,52.0 510.0,105.0 620.0,105.0' fill='none' stroke='#f28c28' stroke-width='3.5' stroke-linejoin='round' stroke-linecap='round'/>
+<circle cx='228' cy='88' r='4' fill='#f28c28'/>
+<polyline points='382.0,182.0 382.0,230.0 538.0,230.0 538.0,135.0 620.0,135.0' fill='none' stroke='#d62728' stroke-width='3.5' stroke-linejoin='round' stroke-linecap='round'/>
+<circle cx='382' cy='182' r='4' fill='#d62728'/>
+<polyline points='426.0,182.0 426.0,242.0 566.0,242.0 566.0,165.0 620.0,165.0' fill='none' stroke='#222222' stroke-width='3.5' stroke-linejoin='round' stroke-linecap='round'/>
+<circle cx='426' cy='182' r='4' fill='#222222'/>
+<rect x='135' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='140' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 140 98)' dy='3'>D12</text>
+<rect x='157' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='162' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 162 98)' dy='3'>D11</text>
+<rect x='179' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='184' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 184 98)' dy='3'>D10</text>
+<rect x='201' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='206' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 206 98)' dy='3'>D9</text>
+<rect x='223' y='83' width='10' height='10' fill='#f28c28' stroke='#cccccc' stroke-width='1'/>
+<text x='228' y='98' font-size='11' font-weight='bold' fill='#ffe9a8' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 228 98)' dy='3'>D8</text>
+<rect x='245' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='250' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 250 98)' dy='3'>D7</text>
+<rect x='267' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='272' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 272 98)' dy='3'>D6</text>
+<rect x='289' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='294' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 294 98)' dy='3'>D5</text>
+<rect x='311' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='316' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 316 98)' dy='3'>D4</text>
+<rect x='333' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='338' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 338 98)' dy='3'>D3</text>
+<rect x='355' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='360' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 360 98)' dy='3'>D2</text>
+<rect x='377' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='382' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 382 98)' dy='3'>GND</text>
+<rect x='399' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='404' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 404 98)' dy='3'>RST</text>
+<rect x='421' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='426' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 426 98)' dy='3'>RX0</text>
+<rect x='443' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='448' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 448 98)' dy='3'>TX1</text>
+<rect x='135' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='140' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 140 172)' dy='3'>D13</text>
+<rect x='157' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='162' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 162 172)' dy='3'>3V3</text>
+<rect x='179' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='184' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 184 172)' dy='3'>REF</text>
+<rect x='201' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='206' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 206 172)' dy='3'>A0</text>
+<rect x='223' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='228' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 228 172)' dy='3'>A1</text>
+<rect x='245' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='250' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 250 172)' dy='3'>A2</text>
+<rect x='267' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='272' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 272 172)' dy='3'>A3</text>
+<rect x='289' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='294' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 294 172)' dy='3'>A4</text>
+<rect x='311' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='316' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 316 172)' dy='3'>A5</text>
+<rect x='333' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='338' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 338 172)' dy='3'>A6</text>
+<rect x='355' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='360' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 360 172)' dy='3'>A7</text>
+<rect x='377' y='177' width='10' height='10' fill='#d62728' stroke='#cccccc' stroke-width='1'/>
+<text x='382' y='172' font-size='11' font-weight='bold' fill='#ffe9a8' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 382 172)' dy='3'>5V</text>
+<rect x='399' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='404' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 404 172)' dy='3'>RST</text>
+<rect x='421' y='177' width='10' height='10' fill='#222222' stroke='#cccccc' stroke-width='1'/>
+<text x='426' y='172' font-size='11' font-weight='bold' fill='#ffe9a8' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 426 172)' dy='3'>GND</text>
+<rect x='443' y='177' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='448' y='172' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 448 172)' dy='3'>VIN</text>
+<rect x='620' y='75.0' width='150' height='120' rx='8' fill='#f4f4f4' stroke='#555' stroke-width='2'/>
+<text x='695.0' y='215.0' font-size='13' font-weight='bold' fill='#222' text-anchor='middle'>PPM receiver</text>
+<rect x='615' y='100.0' width='10' height='10' fill='#f28c28' stroke='#333'/>
+<text x='632' y='109.0' font-size='12' fill='#222'>PPM signal</text>
+<rect x='615' y='130.0' width='10' height='10' fill='#d62728' stroke='#333'/>
+<text x='632' y='139.0' font-size='12' fill='#222'>+5V</text>
+<rect x='615' y='160.0' width='10' height='10' fill='#222222' stroke='#333'/>
+<text x='632' y='169.0' font-size='12' fill='#222'>GND</text>
+<text x='30' y='260' font-size='13' fill='#333'>PPM signal to D8.</text>
+</svg>

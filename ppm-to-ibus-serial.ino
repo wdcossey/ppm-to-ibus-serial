@@ -11,6 +11,14 @@
  millis() timer, the serial port, etc.). This removes most of the jitter; a
  small optional hysteresis filter (PPM_JITTER_THRESHOLD) removes the rest.
 
+ At power-on the sketch watches the PPM signal for a couple of seconds (the
+ "boot check"), works out where the gap between frames is and adjusts its
+ timing limits to suit the radio. Power cycle to check again, e.g. after
+ changing radios. The LED shows what it is doing:
+	fast flash : boot check, or waiting for a PPM signal
+	on         : receiving PPM
+	slow flash : PPM signal lost
+
  PPM input pin (it must be the timer's input capture pin):
 	Uno / Nano / Pro Mini (ATmega328P/168)  : D8  (ICP1)
 	Leonardo / Micro / Pro Micro (32U4)     : D4  (ICP1)
@@ -29,20 +37,41 @@
 #define PPM_MAX_CHANNELS 14                // Frames with more channels are ignored (iBus carries at most 14)
 
 #define PPM_CHANNEL_MIN_US 700             // Shortest valid channel width (us), anything shorter is a glitch
-#define PPM_CHANNEL_MAX_US 2400            // Longest valid channel width (us)
-#define PPM_SYNC_MIN_US 2500               // Any gap at least this long is the frame separator (sync)
+#define PPM_CHANNEL_MAX_US 2400            // Longest valid channel width (us), unless the boot check changes it
+#define PPM_SYNC_MIN_US 2500               // Any gap at least this long is the frame separator (sync), unless the boot check changes it
+
+// Boot check: how long to watch the PPM signal (from the first pulse) before
+// deciding on the timing limits. 0 disables the boot check, the fixed values
+// above are used straight away.
+#ifndef PPM_BOOT_CHECK_MS
+#define PPM_BOOT_CHECK_MS 2000
+#endif
+#define PPM_BOOT_CHECK_TIMEOUT_MS 5000     // Give up (and use the fixed values) if no frame layout is found by then
+#define PPM_FULL_TRAVEL_US 2000            // Channels are assumed to reach at least this, even if the sticks weren't moved during the boot check
 
 // Hysteresis filter: the reported value only moves once the measured value
 // differs from it by more than this many microseconds, and then follows it
-// with this much "slack". Holds sticks perfectly still without losing
-// resolution. Set to 0 to disable. Increase if you still see jitter.
+// with this much "slack" (big, quick moves are followed exactly). Holds
+// sticks perfectly still without losing resolution. Set to 0 to disable.
+// Increase if you still see jitter.
 #define PPM_JITTER_THRESHOLD 4
 
 #define PPM_SIGNAL_TIMEOUT_MS 100          // Stop sending iBus frames if no valid PPM frame was seen for this long
 
 // Set to 1 to print human readable channel values (for the Arduino Serial
 // Monitor) instead of binary iBus frames. Useful to check your wiring/receiver.
+// Set to 2 to also print the raw time between PPM edges every 500ms, before
+// any decoding or filtering. Useful to see what an unusual radio sends.
+#ifndef DEBUG_OUTPUT
 #define DEBUG_OUTPUT 0
+#endif
+
+// Status LED (see above). Comment out STATUS_LED_PIN to leave the LED alone.
+// Pro Micro: it has no LED on pin 13, use its RX LED instead: pin 17 with STATUS_LED_ON LOW.
+#if defined(LED_BUILTIN)
+#define STATUS_LED_PIN LED_BUILTIN
+#endif
+#define STATUS_LED_ON HIGH                 // LOW for an LED that lights up when the pin is low
 
 // ---------------------------------------------------------------------------
 // iBus protocol
@@ -116,8 +145,6 @@
 #define US_TO_TICKS(us) ((uint16_t)(((uint32_t)(us) * CPU_MHZ) / TIMER_PRESCALER))
 
 #define PPM_CHANNEL_MIN_TICKS US_TO_TICKS(PPM_CHANNEL_MIN_US)
-#define PPM_CHANNEL_MAX_TICKS US_TO_TICKS(PPM_CHANNEL_MAX_US)
-#define PPM_SYNC_MIN_TICKS US_TO_TICKS(PPM_SYNC_MIN_US)
 
 // ---------------------------------------------------------------------------
 // State shared between the capture ISR and loop()
@@ -126,6 +153,17 @@
 volatile uint16_t ppm_frame_ticks[PPM_MAX_CHANNELS];   // Last complete, validated frame (timer ticks)
 volatile uint8_t ppm_frame_channels = 0;               // Number of channels in ppm_frame_ticks
 volatile bool ppm_frame_ready = false;                 // Set by the ISR when a new frame is available
+
+// Timing limits used by the ISR, adjusted by the boot check
+volatile uint16_t ppm_sync_min_ticks = US_TO_TICKS(PPM_SYNC_MIN_US);
+volatile uint16_t ppm_channel_max_ticks = US_TO_TICKS(PPM_CHANNEL_MAX_US);
+volatile bool ppm_decoding = (PPM_BOOT_CHECK_MS == 0); // false while the boot check runs
+
+// The most recent edge-to-edge times, for the boot check and DEBUG_OUTPUT 2
+#define EDGE_BUFFER_SIZE 128                           // Must be a power of 2
+volatile uint16_t edge_ticks[EDGE_BUFFER_SIZE];
+volatile uint16_t edge_count = 0;                      // Edges seen so far (wraps around)
+volatile bool edge_buffer_full = false;                // Every entry of edge_ticks holds a real measurement
 
 // ---------------------------------------------------------------------------
 // State only used by loop()
@@ -141,6 +179,10 @@ byte serial_buffer[IBUS_FRAME_LENGTH];
 void setup() {
 
 	Serial.begin(SERIAL_BAUD_RATE);
+
+#ifdef STATUS_LED_PIN
+	pinMode(STATUS_LED_PIN, OUTPUT);
+#endif
 
 	// Keep the input from floating (and generating noise) when nothing is connected
 	pinMode(PPM_INPUT_PIN, INPUT_PULLUP);
@@ -158,7 +200,7 @@ void setup() {
 }
 
 // Input capture interrupt, runs on every PPM edge.
-// Every gap of at least PPM_SYNC_MIN_US starts a new frame, so the decoder
+// Every gap of at least ppm_sync_min_ticks starts a new frame, so the decoder
 // re-synchronises on every frame and recovers from glitches by itself.
 ISR(PPM_CAPT_vect) {
 
@@ -172,7 +214,16 @@ ISR(PPM_CAPT_vect) {
 	const uint16_t width = capture - last_capture;    // Unsigned math handles the timer wrapping
 	last_capture = capture;
 
-	if (width >= PPM_SYNC_MIN_TICKS) {
+	edge_ticks[edge_count % EDGE_BUFFER_SIZE] = width;
+	if (++edge_count > EDGE_BUFFER_SIZE) {
+		edge_buffer_full = true;                       // The very first (meaningless) measurement has been overwritten
+	}
+
+	if (!ppm_decoding) {
+		return;                                        // Boot check still running
+	}
+
+	if (width >= ppm_sync_min_ticks) {
 
 		if (in_frame) {
 			// Only publish a frame if it has the same channel count as the one
@@ -196,7 +247,7 @@ ISR(PPM_CAPT_vect) {
 		return;                                        // Waiting for a sync gap
 	}
 
-	if (width < PPM_CHANNEL_MIN_TICKS || width > PPM_CHANNEL_MAX_TICKS || index >= PPM_MAX_CHANNELS) {
+	if (width < PPM_CHANNEL_MIN_TICKS || width > ppm_channel_max_ticks || index >= PPM_MAX_CHANNELS) {
 		in_frame = false;                              // Glitch or too many channels, drop this frame
 		return;
 	}
@@ -212,6 +263,9 @@ static uint16_t TicksToMicroseconds(uint16_t ticks)
 static uint16_t FilterJitter(uint16_t current, uint16_t sample)
 {
 #if PPM_JITTER_THRESHOLD > 0
+	if (sample > current + 4 * PPM_JITTER_THRESHOLD || sample + 4 * PPM_JITTER_THRESHOLD < current) {
+		return sample;                                 // A big, quick move isn't jitter, follow it exactly
+	}
 	if (sample > current + PPM_JITTER_THRESHOLD) {
 		return sample - PPM_JITTER_THRESHOLD;
 	}
@@ -222,6 +276,164 @@ static uint16_t FilterJitter(uint16_t current, uint16_t sample)
 #else
 	(void)current;
 	return sample;
+#endif
+}
+
+// Copies the edge buffer, oldest first, converted to microseconds.
+// Returns the number of valid entries, *edges is set to edge_count.
+static uint8_t CopyEdges(uint16_t *us, uint16_t *edges)
+{
+	uint16_t count;
+	uint8_t valid;
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+		count = edge_count;
+		// Skip the first measurement after power-on, it isn't a real edge-to-edge time
+		valid = edge_buffer_full ? EDGE_BUFFER_SIZE : (count > 1 ? count - 1 : 0);
+		for (uint8_t i = 0; i < valid; i++) {
+			us[i] = edge_ticks[(uint16_t)(count - valid + i) % EDGE_BUFFER_SIZE];
+		}
+	}
+	*edges = count;
+
+	for (uint8_t i = 0; i < valid; i++) {
+		us[i] = TicksToMicroseconds(us[i]);
+	}
+	return valid;
+}
+
+struct FrameLayout {
+	uint8_t channels;
+	uint16_t gap_min_us;                               // Shortest frame gap seen
+	uint16_t channel_max_us;                           // Longest channel seen
+};
+
+// Looks for a repeating PPM frame layout in a list of edge-to-edge times:
+// a fixed number of channels followed by a gap that's longer than all of them.
+// Picks the layout with the clearest difference between gaps and channels.
+static bool FindFrameLayout(const uint16_t *us, uint8_t count, FrameLayout &layout)
+{
+	int32_t best_margin = 0;
+
+	for (uint8_t channels = PPM_MIN_CHANNELS; channels <= PPM_MAX_CHANNELS; channels++) {
+		for (uint8_t phase = 0; phase <= channels; phase++) {
+			uint16_t gap_min = 0xFFFF, channel_min = 0xFFFF, channel_max = 0;
+			uint8_t frames = 0;
+
+			// us[gap] is a frame gap, the channels follow it
+			for (uint8_t gap = phase; gap + channels < count; gap += channels + 1) {
+				frames++;
+				gap_min = min(gap_min, us[gap]);
+				for (uint8_t c = 1; c <= channels; c++) {
+					channel_min = min(channel_min, us[gap + c]);
+					channel_max = max(channel_max, us[gap + c]);
+				}
+			}
+
+			const int32_t margin = (int32_t)gap_min - (int32_t)channel_max;
+			if (frames >= 3 && channel_min >= PPM_CHANNEL_MIN_US && margin > best_margin) {
+				best_margin = margin;
+				layout.channels = channels;
+				layout.gap_min_us = gap_min;
+				layout.channel_max_us = channel_max;
+			}
+		}
+	}
+	return best_margin > 0;
+}
+
+// Runs from loop() until the boot check has finished
+static void RunBootCheck(unsigned long now)
+{
+	static unsigned long first_edge_ms = 0;
+	static bool seen_edges = false;
+	static unsigned long last_try_ms = 0;
+
+	uint16_t us[EDGE_BUFFER_SIZE];
+	uint16_t edges;
+	const uint8_t count = CopyEdges(us, &edges);
+
+	if (edges == 0) {
+		return;                                        // No PPM signal yet, keep waiting
+	}
+	if (!seen_edges) {
+		seen_edges = true;
+		first_edge_ms = now;
+	}
+
+	const unsigned long elapsed = now - first_edge_ms;
+	if (elapsed < PPM_BOOT_CHECK_MS || now - last_try_ms < 250) {
+		return;
+	}
+	last_try_ms = now;
+
+	uint16_t sync_us = PPM_SYNC_MIN_US;
+	uint16_t channel_max_us = PPM_CHANNEL_MAX_US;
+	FrameLayout layout;
+	const bool found = (count == EDGE_BUFFER_SIZE) && FindFrameLayout(us, count, layout);
+
+	if (!found && elapsed < PPM_BOOT_CHECK_TIMEOUT_MS) {
+		return;                                        // Try again in a moment
+	}
+
+	if (found && (layout.gap_min_us < PPM_SYNC_MIN_US || layout.channel_max_us > PPM_CHANNEL_MAX_US)) {
+		// The default limits don't fit this radio. Put the sync threshold
+		// between its longest channel and its shortest gap. Leave room for
+		// the sticks reaching full travel, and don't go much higher than
+		// needed: on fixed length frames the gap gets shorter as the sticks move.
+		uint16_t longest = max(layout.channel_max_us, (uint16_t)PPM_FULL_TRAVEL_US);
+		if (longest >= layout.gap_min_us) {
+			longest = layout.channel_max_us;
+		}
+		sync_us = min((uint16_t)((layout.gap_min_us + longest) / 2),
+		              max((uint16_t)PPM_SYNC_MIN_US, (uint16_t)(layout.channel_max_us + 200)));
+		channel_max_us = sync_us - 1;
+	}
+
+	ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+		ppm_sync_min_ticks = US_TO_TICKS(sync_us);
+		ppm_channel_max_ticks = US_TO_TICKS(channel_max_us);
+		ppm_decoding = true;
+	}
+
+	if (DEBUG_OUTPUT) {
+		Serial.print(F("Boot check: "));
+		if (found) {
+			Serial.print(layout.channels);
+			Serial.print(F(" ch, channels up to "));
+			Serial.print(layout.channel_max_us);
+			Serial.print(F("us, frame gaps from "));
+			Serial.print(layout.gap_min_us);
+			Serial.print(F("us"));
+		}
+		else {
+			Serial.print(F("no PPM frames found"));
+		}
+		Serial.print(F(". Using sync >= "));
+		Serial.print(sync_us);
+		Serial.print(F("us, channels "));
+		Serial.print(PPM_CHANNEL_MIN_US);
+		Serial.print('-');
+		Serial.print(channel_max_us);
+		Serial.println(F("us"));
+	}
+}
+
+static void UpdateStatusLed(unsigned long now)
+{
+#ifdef STATUS_LED_PIN
+	bool on;
+	if (!ppm_decoding) {
+		on = (now / 100) & 1;                          // Fast flash: boot check / waiting for a signal
+	}
+	else if (channel_count > 0) {
+		on = true;                                     // On: receiving
+	}
+	else {
+		on = ((now - last_frame_ms) / 500) & 1;        // Slow flash: signal lost (starts off)
+	}
+	digitalWrite(STATUS_LED_PIN, on ? STATUS_LED_ON : !STATUS_LED_ON);
+#else
+	(void)now;
 #endif
 }
 
@@ -266,6 +478,11 @@ static void WriteDebug()
 	}
 	last_print_ms = now;
 
+	if (!ppm_decoding) {
+		Serial.println(F("Checking PPM signal..."));
+		return;
+	}
+
 	if (channel_count == 0) {
 		Serial.println(F("No PPM signal"));
 		return;
@@ -279,6 +496,52 @@ static void WriteDebug()
 	}
 	Serial.println();
 }
+
+#if DEBUG_OUTPUT >= 2
+// Prints the last 32 edge-to-edge times in microseconds, oldest first:
+// [12000] = frame gap (sync), 2450? = neither a valid channel nor a sync gap
+static void WriteRawTiming()
+{
+	static unsigned long last_print_ms = 0;
+	static uint16_t last_edges = 0;
+	const unsigned long now = millis();
+
+	if (now - last_print_ms < 500) {
+		return;
+	}
+	last_print_ms = now;
+
+	uint16_t us[EDGE_BUFFER_SIZE];
+	uint16_t edges;
+	const uint8_t count = CopyEdges(us, &edges);
+
+	Serial.print(F("raw:"));
+	if (edges == last_edges || count == 0) {
+		Serial.println(F(" no edges"));
+		return;
+	}
+	last_edges = edges;
+
+	const uint16_t sync_us = TicksToMicroseconds(ppm_sync_min_ticks);
+	const uint16_t channel_max_us = TicksToMicroseconds(ppm_channel_max_ticks);
+
+	for (uint8_t i = (count > 32) ? count - 32 : 0; i < count; i++) {
+		Serial.print(' ');
+		if (us[i] >= sync_us) {
+			Serial.print('[');
+			Serial.print(us[i]);
+			Serial.print(']');
+		}
+		else {
+			Serial.print(us[i]);
+			if (us[i] < PPM_CHANNEL_MIN_US || us[i] > channel_max_us) {
+				Serial.print('?');
+			}
+		}
+	}
+	Serial.println();
+}
+#endif
 
 // the loop function runs over and over again until power down or reset
 void loop() {
@@ -299,6 +562,11 @@ void loop() {
 	}
 
 	const unsigned long now = millis();
+
+	if (!ppm_decoding) {
+		RunBootCheck(now);
+	}
+	UpdateStatusLed(now);
 
 	if (frame_channels > 0) {
 		// Don't filter against stale values after signal loss or a channel count change
@@ -325,4 +593,8 @@ void loop() {
 	if (DEBUG_OUTPUT) {
 		WriteDebug();
 	}
+
+#if DEBUG_OUTPUT >= 2
+	WriteRawTiming();
+#endif
 }

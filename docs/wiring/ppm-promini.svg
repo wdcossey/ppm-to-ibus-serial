@@ -1,0 +1,83 @@
+<svg xmlns='http://www.w3.org/2000/svg' width='770' height='324' viewBox='0 0 770 324' font-family='Helvetica, Arial, sans-serif'>
+<rect width='100%' height='100%' fill='#ffffff'/>
+<text x='30' y='34' font-size='20' font-weight='bold' fill='#222'>Arduino Pro Mini (5V / 16MHz)</text>
+<rect x='100' y='70' width='350' height='150' rx='10' fill='#2f4f5f' stroke='#1d3340' stroke-width='2'/>
+<circle cx='270' cy='145' r='6' fill='#ffd84d' stroke='#c9a500'/>
+<text x='280' y='149' font-size='11' fill='#ffffff'>LED 13 (status)</text>
+<polyline points='400.0,88.0 400.0,52.0 480.0,52.0 480.0,115.0 590.0,115.0' fill='none' stroke='#f28c28' stroke-width='3.5' stroke-linejoin='round' stroke-linecap='round'/>
+<circle cx='400' cy='88' r='4' fill='#f28c28'/>
+<polyline points='246.0,202.0 246.0,250.0 508.0,250.0 508.0,145.0 590.0,145.0' fill='none' stroke='#d62728' stroke-width='3.5' stroke-linejoin='round' stroke-linecap='round'/>
+<circle cx='246' cy='202' r='4' fill='#d62728'/>
+<polyline points='202.0,202.0 202.0,262.0 536.0,262.0 536.0,175.0 590.0,175.0' fill='none' stroke='#222222' stroke-width='3.5' stroke-linejoin='round' stroke-linecap='round'/>
+<circle cx='202' cy='202' r='4' fill='#222222'/>
+<rect x='175' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='180' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 180 98)' dy='3'>TXO</text>
+<rect x='197' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='202' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 202 98)' dy='3'>RXI</text>
+<rect x='219' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='224' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 224 98)' dy='3'>RST</text>
+<rect x='241' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='246' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 246 98)' dy='3'>GND</text>
+<rect x='263' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='268' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 268 98)' dy='3'>2</text>
+<rect x='285' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='290' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 290 98)' dy='3'>3</text>
+<rect x='307' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='312' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 312 98)' dy='3'>4</text>
+<rect x='329' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='334' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 334 98)' dy='3'>5</text>
+<rect x='351' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='356' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 356 98)' dy='3'>6</text>
+<rect x='373' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='378' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 378 98)' dy='3'>7</text>
+<rect x='395' y='83' width='10' height='10' fill='#f28c28' stroke='#cccccc' stroke-width='1'/>
+<text x='400' y='98' font-size='11' font-weight='bold' fill='#ffe9a8' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 400 98)' dy='3'>8</text>
+<rect x='417' y='83' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='422' y='98' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='end' transform='rotate(-90 422 98)' dy='3'>9</text>
+<rect x='175' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='180' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 180 192)' dy='3'>RAW</text>
+<rect x='197' y='197' width='10' height='10' fill='#222222' stroke='#cccccc' stroke-width='1'/>
+<text x='202' y='192' font-size='11' font-weight='bold' fill='#ffe9a8' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 202 192)' dy='3'>GND</text>
+<rect x='219' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='224' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 224 192)' dy='3'>RST</text>
+<rect x='241' y='197' width='10' height='10' fill='#d62728' stroke='#cccccc' stroke-width='1'/>
+<text x='246' y='192' font-size='11' font-weight='bold' fill='#ffe9a8' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 246 192)' dy='3'>VCC</text>
+<rect x='263' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='268' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 268 192)' dy='3'>A3</text>
+<rect x='285' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='290' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 290 192)' dy='3'>A2</text>
+<rect x='307' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='312' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 312 192)' dy='3'>A1</text>
+<rect x='329' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='334' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 334 192)' dy='3'>A0</text>
+<rect x='351' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='356' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 356 192)' dy='3'>13</text>
+<rect x='373' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='378' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 378 192)' dy='3'>12</text>
+<rect x='395' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='400' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 400 192)' dy='3'>11</text>
+<rect x='417' y='197' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='422' y='192' font-size='10' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start' transform='rotate(-90 422 192)' dy='3'>10</text>
+<rect x='113' y='97.0' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='127' y='105.0' font-size='9' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start'>GRN</text>
+<rect x='113' y='113.5' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='127' y='121.5' font-size='9' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start'>TXO</text>
+<rect x='113' y='130.0' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='127' y='138.0' font-size='9' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start'>RXI</text>
+<rect x='113' y='146.5' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='127' y='154.5' font-size='9' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start'>VCC</text>
+<rect x='113' y='163.0' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='127' y='171.0' font-size='9' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start'>GND</text>
+<rect x='113' y='179.5' width='10' height='10' fill='#111111' stroke='#cccccc' stroke-width='1'/>
+<text x='127' y='187.5' font-size='9' font-weight='normal' fill='#ffffff' stroke='#2f4f5f' stroke-width='3' paint-order='stroke' text-anchor='start'>BLK</text>
+<rect x='590' y='85.0' width='150' height='120' rx='8' fill='#f4f4f4' stroke='#555' stroke-width='2'/>
+<text x='665.0' y='225.0' font-size='13' font-weight='bold' fill='#222' text-anchor='middle'>PPM receiver</text>
+<rect x='585' y='110.0' width='10' height='10' fill='#f28c28' stroke='#333'/>
+<text x='602' y='119.0' font-size='12' fill='#222'>PPM signal</text>
+<rect x='585' y='140.0' width='10' height='10' fill='#d62728' stroke='#333'/>
+<text x='602' y='149.0' font-size='12' fill='#222'>+5V</text>
+<rect x='585' y='170.0' width='10' height='10' fill='#222222' stroke='#333'/>
+<text x='602' y='179.0' font-size='12' fill='#222'>GND</text>
+<text x='30' y='280' font-size='13' fill='#333'>PPM signal to pin 8. On a 3.3V / 8MHz Pro Mini, power the receiver from 5V</text>
+<text x='30' y='302' font-size='13' fill='#333'>(into RAW) and check that its PPM signal is no higher than 3.3V.</text>
+</svg>

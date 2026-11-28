@@ -1,39 +1,70 @@
-import random, subprocess, os, tempfile, sys
+import os, random, subprocess, tempfile
 
 HARNESS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "build", "harness")
+MCU = "atmega328p"
+PPM_PIN = "B0"       # D8
+LED_PIN = "B5"       # D13
 PULSE = 300.0
 
-def frames(seq, start=50_000.0, period=22_500.0, jitter=0.0, inverted=False, seed=1):
-    """seq: list of channel lists (None = no signal for one period). Returns edge list [(t_us, level)]."""
+START = 50_000.0     # first PPM pulse (us after power-on)
+BOOT = 2_500_000.0   # signal fed before the test sequence, so the boot check has finished
+T0 = START + BOOT    # the test sequence starts here (us)
+
+def frames(seq, start=START, period=22_500.0, jitter=0.0, inverted=False, seed=1, min_gap=4000.0, warmup=True):
+    """seq: list of channel lists (None = no signal for one period). Returns [(t_us, level)].
+    With warmup, the first frame of seq is repeated from `start` until T0, then seq starts at T0."""
     rnd = random.Random(seed)
     edges, t0 = [], start
     hi, lo = (0, 1) if inverted else (1, 0)
     if inverted:
         edges.append((t0 - 1000, 1))
-    for ch in seq:
-        if ch is None:
-            t0 += period
-            continue
-        t = t0
-        starts = [t]
+
+    def frame(ch):
+        nonlocal t0
+        starts, t = [t0], t0
         for w in ch:
             t += w
             starts.append(t)
         for s in starts:
             s += rnd.uniform(-jitter, jitter)
             edges.append((s, hi)); edges.append((s + PULSE, lo))
-        t0 = max(t0 + period, starts[-1] + 4000)
+        t0 = max(t0 + period, starts[-1] + min_gap)
+
+    if warmup:
+        first = next(c for c in seq if c is not None)
+        while t0 < T0 - 25_000:
+            frame(first)
+        t0 = max(t0, T0)
+    for ch in seq:
+        if ch is None:
+            t0 += max(period, 20_000)
+        else:
+            frame(ch)
     return sorted(edges)
 
-def run(elf, edges):
+def simulate(elf, edges, watch=()):
+    """Returns (uart bytes [(t_ms, byte)], pin changes {pin: [(t_ms, level)]})."""
     with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as f:
         for t, l in edges:
-            f.write(f"{t:.3f} {l}\n")
+            f.write(f"{t:.3f} P {PPM_PIN} {l}\n")
         name = f.name
-    out = subprocess.run([HARNESS, elf, name], capture_output=True, text=True, check=True).stdout
+    out = subprocess.run([HARNESS, MCU, elf, name, *watch], capture_output=True, text=True, check=True).stdout
     os.unlink(name)
-    data = [(float(p[1]), int(p[2])) for p in (ln.split() for ln in out.splitlines()) if p and p[0] == "U"]
-    return decode(data)
+    uart, pins = [], {p: [] for p in watch}
+    for p in (ln.split() for ln in out.splitlines()):
+        if p and p[0] == "U0":
+            uart.append((float(p[1]), int(p[2])))
+        elif p and p[0][0] == "P" and p[0][1:] in pins:
+            pins[p[0][1:]].append((float(p[1]), int(p[2])))
+    return uart, pins
+
+def run(elf, edges, since=T0):
+    """Decoded iBus frames [(t_ms, [14 values])] sent after `since` (us)."""
+    return [f for f in decode(simulate(elf, edges)[0]) if f[0] >= since / 1000]
+
+def run_text(elf, edges):
+    """Serial output as text (for the DEBUG_OUTPUT builds)."""
+    return "".join(chr(b) for _, b in simulate(elf, edges)[0])
 
 def decode(data):
     """Parse iBus frames; returns list of (t_ms, [14 values]); raises on bad checksum/garbage."""
